@@ -114,7 +114,7 @@ int main(int argc, char **argv)
     void File_Output(int aaa);
     void Memory_Allocate(int arr);
     char tempa[2000],tempc[2000],syscmd[2000],workdir[2000];
-    char file_tarseq[2000],file_scaff[2000],file_sfagp[2000],file_datas[2000],file_plot10x[2000],file_cover[2000],file_falgn[2000];
+    char file_tarseq[2000],file_scaff[2000],file_sfagp[2000],file_datas[2000],file_plot10x[2000],file_cover[2000],file_falgn[2000],file_mkdup[2000];
     char file_read1[2000],file_read2[2000],samname[500],bamname[500],toolname[500],datname[500],lenplot10x[200],mkdup[200];
     int systemRet = system (syscmd);
     int systemChd = chdir(tmpdir);
@@ -700,7 +700,7 @@ int main(int argc, char **argv)
       RunSystemCommand(syscmd);
 
       memset(syscmd,'\0',2000);
-      sprintf(syscmd,"mv Dupmarked.bam %s",file_plot10x);
+      sprintf(syscmd,"mv Dupmarked.bam %s",file_mkdup);
       RunSystemCommand(syscmd);
     }
     if(plot_10x == 1)
