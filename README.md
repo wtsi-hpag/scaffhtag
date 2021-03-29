@@ -1,5 +1,5 @@
 # scaffhtag v1.0
-Pipeline for scaffolding and breaking a genome assembly using haplotagging reads.
+Pipeline for scaffolding genome assemblies using haplotagging reads.
 
 Pipeline steps:
         
@@ -22,7 +22,7 @@ you need a higher version of gcc
 CC= /software/gcc-4.9.2/bin/gcc in the makefile
 
 
-    $ git clone  https://github.com/wtsi-hpag/htag.git 
+    $ git clone  https://github.com/wtsi-hpag/scaffhtag.git 
     $ cd htag
     $ ./install.sh
 		
