@@ -109,6 +109,8 @@ else
     rm -rf $projdir/src/pigz/
 fi
 
+    chmod +x $bindir/samtools
+
 ###### Compile scaffhtag sources ######
 
 echo; echo "Compiling scaffhtag sources"
