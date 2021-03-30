@@ -32,11 +32,11 @@ The genome aligner BWA (http://bio-bwa.sourceforge.net) and SMALT (http://www.sa
 
 #### Prepare read files with barcode error correction and extraction
            $ /full/path/to/htag/src/scaff_read input.dat htag-reads_RC1.fastq.gz htag-reads_RC2.fastq.gz \
-	       input.dat               - input a text file to point the locations of the reads in paired files \
-               htag-reads_RC1.fastq.gz - output read file                       \
-	       htag-reads_RC1.fastq.gz - output read file                      \
+		input.dat  - input a text file to point the locations of the reads in paired files \
+		htag-reads_RC1.fastq.gz - output read file                      \
+		htag-reads_RC1.fastq.gz - output read file                      \
 
-	       input.dat file shoul be like:
+		input.dat file shoul be like:
 		q1=/lustre/scratch116/vr/projects/34714#13_BX_R1_001.fastq.gz \
 		q2=/lustre/scratch116/vr/projects/34714#13_BX_R1_001.fastq.gz \
 		q1=/lustre/scratch116/vr/projects/34714#14_BX_R1_001.fastq.gz \
@@ -65,7 +65,7 @@ The genome aligner BWA (http://bio-bwa.sourceforge.net) and SMALT (http://www.sa
              n_links_s2:   step 2: minimum number of shared barcodes [ default = 8 ]
              block:        length to determine for nearest neighbours [ default = 50000 ]
              plot:         output image file with barcode length distributions and coverage stats 
-	     mkdup:        output bam file with duplicated reads removed \n"); 
+	         mkdup:        output bam file with duplicated reads removed \n"); 
 
 	    
      If you have any problems, please contact
