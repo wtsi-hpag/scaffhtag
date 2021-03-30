@@ -9,17 +9,12 @@ Pipeline steps:
       2 The reads are mapped to the draft assembly using either BWA or SMALT
       3 Barcodes are sorted together with contigs as well as mapping coordinates
       4 A relation matrix is built to record the shared barcodes among the contigs which may be linked
-      5 Order and orientation of linked contigs are determined after nearest neighbours are found. 
-      
+      5 Order and orientation of linked contigs are determined after nearest neighbours are found 
+      6 Barcode length is plotted if use "-plot"
+      7 A bam file with duplication reads removed is outputed if use "-mkdup".     
+ 
 ### Download and Compile:
 Requirements for compiling: gcc gcc-4.9.2 or late:
-
-If you see this message,
-cc1: error: unrecognised command line option ‘-std=c11’
-make: *** [breakhtag.o] Error 1
-
-you need a higher version of gcc
-CC= /software/gcc-4.9.2/bin/gcc in the makefile
 
 
     $ git clone  https://github.com/wtsi-hpag/scaffhtag.git 
@@ -42,14 +37,14 @@ The genome aligner BWA (http://bio-bwa.sourceforge.net) and SMALT (http://www.sa
 	       htag-reads_RC1.fastq.gz - output read file                      \
 
 	       input.dat file shoul be like:
-		q1=/lustre/scratch116/vr/projects/Tes1_S1_L008_R1_001.fastq.gz \
-		q2=/lustre/scratch116/vr/projects/Tes1_S1_L008_R2_001.fastq.gz \
-		q1=/lustre/scratch116/vr/projects/Tes1_S2_L008_R1_001.fastq.gz \
-		q2=/lustre/scratch116/vr/projects/Tes1_S2_L008_R2_001.fastq.gz \
-		q1=/lustre/scratch116/vr/projects/Tes1_S3_L008_R1_001.fastq.gz \
-		q2=/lustre/scratch116/vr/projects/Tes1_S3_L008_R2_001.fastq.gz \
-		q1=/lustre/scratch116/vr/projects/Tes1_S4_L008_R1_001.fastq.gz \
-		q2=/lustre/scratch116/vr/projects/Tes1_S4_L008_R2_001.fastq.gz \
+		q1=/lustre/scratch116/vr/projects/34714#13_BX_R1_001.fastq.gz \
+		q2=/lustre/scratch116/vr/projects/34714#13_BX_R1_001.fastq.gz \
+		q1=/lustre/scratch116/vr/projects/34714#14_BX_R1_001.fastq.gz \
+		q2=/lustre/scratch116/vr/projects/34714#14_BX_R1_001.fastq.gz \
+		q1=/lustre/scratch116/vr/projects/34714#15_BX_R1_001.fastq.gz \
+		q2=/lustre/scratch116/vr/projects/34714#15_BX_R1_001.fastq.gz \
+		q1=/lustre/scratch116/vr/projects/34714#16_BX_R1_001.fastq.gz \
+		q2=/lustre/scratch116/vr/projects/34714#16_BX_R1_001.fastq.gz \
  
 #### Run scaffhtag:
            $ /full/path/to/htag/src/scaffhtag -nodes <nodes> -align <aligner> -score <score> \
@@ -68,12 +63,12 @@ The genome aligner BWA (http://bio-bwa.sourceforge.net) and SMALT (http://www.sa
              edge_len:     length of mapped reads to consider for scaffolding [ default = 50000 ]
              n_links_s1:   step 1: minimum number of shared barcodes [ default = 8 ]
              n_links_s2:   step 2: minimum number of shared barcodes [ default = 8 ]
-             aggressive:   1 - aggressively mapping filtering on small PacBio/ONT contigs; 
-	     		   0 - no aggressive for short read assembly  [ default = 1 ]
              block:        length to determine for nearest neighbours [ default = 50000 ]
              plot:         output image file with barcode length distributions and coverage stats 
 	     mkdup:        output bam file with duplicated reads removed \n"); 
 
 	    
-
+     If you have any problems, please contact
+ 
+         Zemin Ning ( zn1@sanger.ac.uk )  
 
