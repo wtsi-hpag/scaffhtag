@@ -208,7 +208,6 @@ int main(int argc, char **argv)
        }
        else if(!strcmp(argv[i],"-mkdup"))
        {
-         memset(toolname,'\0',500);
          sscanf(argv[++i],"%s",mkdup);
 	 mkdup_flag = 1;
          file_tag = 1;
