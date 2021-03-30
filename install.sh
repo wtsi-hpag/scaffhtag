@@ -110,6 +110,7 @@ else
 fi
 
     chmod +x $bindir/samtools
+    chmod +x $bindir/pigz
 
 ###### Compile scaffhtag sources ######
 
