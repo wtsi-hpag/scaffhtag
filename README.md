@@ -75,6 +75,8 @@ The genome aligner BWA (http://bio-bwa.sourceforge.net) and SMALT (http://www.sa
 	barcode-length.png:          barcode length distribution plot        
 	Dupmarked.bam:               sorted bam file with duplicated reads removed
 	    
+### Further information:
+
      If you have any problems, please contact
  
          Zemin Ning ( zn1@sanger.ac.uk )  
