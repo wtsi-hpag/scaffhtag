@@ -58,15 +58,22 @@ The genome aligner BWA (http://bio-bwa.sourceforge.net) and SMALT (http://www.sa
              score:        averaged mapping score on each barcode fragment [ default = 20 ]
              aligner:      sequence aligner: bwa or smalt [ default = bwa ]
              matrix_size:  relation matrix size [ default = 2000 ]
-             min_reads_s1: step 1: minimum number of reads per barcode [ default = 10 ]
-             min_reads_s2: step 2: minimum number of reads per barcode [ default = 10 ]
+             min_reads_s1: step 1: minimum number of reads per barcode [ default = 4 ]
+             min_reads_s2: step 2: minimum number of reads per barcode [ default = 4 ]
              edge_len:     length of mapped reads to consider for scaffolding [ default = 50000 ]
-             n_links_s1:   step 1: minimum number of shared barcodes [ default = 8 ]
-             n_links_s2:   step 2: minimum number of shared barcodes [ default = 8 ]
+             n_links_s1:   step 1: minimum number of shared barcodes [ default = 3 ]
+             n_links_s2:   step 2: minimum number of shared barcodes [ default = 3 ]
              block:        length to determine for nearest neighbours [ default = 50000 ]
              plot:         output image file with barcode length distributions and coverage stats 
 	         mkdup:        output bam file with duplicated reads removed \n"); 
 
+### Output files:
+
+	output_scaffolds.fasta:      scaffolded fasta file        
+	output_scaffolds.fasta.agp:  scaffolded AGP file        
+	output_scaffolds.fasta.cov:  barcode and read coverage file        
+	barcode-length.png:          barcode length distribution plot        
+	Dupmarked.bam:               sorted bam file with duplicated reads removed
 	    
      If you have any problems, please contact
  
