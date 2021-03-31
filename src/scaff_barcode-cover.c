@@ -346,7 +346,7 @@ void Barcode_Process(char **argv,int args,int nSeq)
           int ctg_len = hit_length[i];
           int set_cover = 0;
           int n_reads = 0;
-          int n_bases = 0;
+          long n_bases = 0;
           int read_cover = 0;
           int ii,jj,stopflag,mini_hit,mini_los;
 
@@ -381,7 +381,7 @@ void Barcode_Process(char **argv,int args,int nSeq)
           t_RDbases = t_RDbases + n_bases;
           hit_bccover[idt] = ave_cover;
           hit_rdcover[idt] = read_cover;
-          printf("Scaffold: %s %d %ld %d %d %d %d\n",S_Name[i],ctg_len,ave_cover,set_cover,n_reads,n_bases,read_cover);
+          printf("Scaffold: %s %d %ld %d %d %ld %d\n",S_Name[i],ctg_len,ave_cover,set_cover,n_reads,n_bases,read_cover);
 /*          if(strcmp(S_Name[i],"tarseq_205")==0)
           {
             for(ii=0;ii<ctg_len;ii++)
