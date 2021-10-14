@@ -9,12 +9,17 @@ Pipeline steps:
       2 The reads are mapped to the draft assembly using either BWA or SMALT
       3 Barcodes are sorted together with contigs as well as mapping coordinates
       4 A relation matrix is built to record the shared barcodes among the contigs which may be linked
-      5 Order and orientation of linked contigs are determined after nearest neighbours are found 
-      6 Barcode length is plotted if use "-plot"
-      7 A bam file with duplication reads removed is outputed if use "-mkdup".     
- 
+      5 Order and orientation of linked contigs are determined after nearest neighbours are found. 
+      
 ### Download and Compile:
 Requirements for compiling: gcc gcc-4.9.2 or late:
+
+If you see this message,
+cc1: error: unrecognised command line option ‘-std=c11’
+make: *** [breakhtag.o] Error 1
+
+you need a higher version of gcc
+CC= /software/gcc-4.9.2/bin/gcc in the makefile
 
 
     $ git clone  https://github.com/wtsi-hpag/scaffhtag.git 
@@ -32,19 +37,19 @@ The genome aligner BWA (http://bio-bwa.sourceforge.net) and SMALT (http://www.sa
 
 #### Prepare read files with barcode error correction and extraction
            $ /full/path/to/htag/src/scaff_read input.dat htag-reads_RC1.fastq.gz htag-reads_RC2.fastq.gz \
-		input.dat  - input a text file to point the locations of the reads in paired files \
-		htag-reads_RC1.fastq.gz - output read file                      \
-		htag-reads_RC1.fastq.gz - output read file                      \
+	       input.dat               - input a text file to point the locations of the reads in paired files \
+               htag-reads_RC1.fastq.gz - output read file                       \
+	       htag-reads_RC1.fastq.gz - output read file                      \
 
-		input.dat file shoul be like:
-		q1=/lustre/scratch116/vr/projects/34714#13_BX_R1_001.fastq.gz \
-		q2=/lustre/scratch116/vr/projects/34714#13_BX_R1_001.fastq.gz \
-		q1=/lustre/scratch116/vr/projects/34714#14_BX_R1_001.fastq.gz \
-		q2=/lustre/scratch116/vr/projects/34714#14_BX_R1_001.fastq.gz \
-		q1=/lustre/scratch116/vr/projects/34714#15_BX_R1_001.fastq.gz \
-		q2=/lustre/scratch116/vr/projects/34714#15_BX_R1_001.fastq.gz \
-		q1=/lustre/scratch116/vr/projects/34714#16_BX_R1_001.fastq.gz \
-		q2=/lustre/scratch116/vr/projects/34714#16_BX_R1_001.fastq.gz \
+	       input.dat file shoul be like:
+		q1=/lustre/scratch116/vr/projects/Tes1_S1_L008_R1_001.fastq.gz \
+		q2=/lustre/scratch116/vr/projects/Tes1_S1_L008_R2_001.fastq.gz \
+		q1=/lustre/scratch116/vr/projects/Tes1_S2_L008_R1_001.fastq.gz \
+		q2=/lustre/scratch116/vr/projects/Tes1_S2_L008_R2_001.fastq.gz \
+		q1=/lustre/scratch116/vr/projects/Tes1_S3_L008_R1_001.fastq.gz \
+		q2=/lustre/scratch116/vr/projects/Tes1_S3_L008_R2_001.fastq.gz \
+		q1=/lustre/scratch116/vr/projects/Tes1_S4_L008_R1_001.fastq.gz \
+		q2=/lustre/scratch116/vr/projects/Tes1_S4_L008_R2_001.fastq.gz \
  
 #### Run scaffhtag:
            $ /full/path/to/htag/src/scaffhtag -nodes <nodes> -align <aligner> -score <score> \
@@ -58,26 +63,17 @@ The genome aligner BWA (http://bio-bwa.sourceforge.net) and SMALT (http://www.sa
              score:        averaged mapping score on each barcode fragment [ default = 20 ]
              aligner:      sequence aligner: bwa or smalt [ default = bwa ]
              matrix_size:  relation matrix size [ default = 2000 ]
-             min_reads_s1: step 1: minimum number of reads per barcode [ default = 4 ]
-             min_reads_s2: step 2: minimum number of reads per barcode [ default = 4 ]
+             min_reads_s1: step 1: minimum number of reads per barcode [ default = 10 ]
+             min_reads_s2: step 2: minimum number of reads per barcode [ default = 10 ]
              edge_len:     length of mapped reads to consider for scaffolding [ default = 50000 ]
-             n_links_s1:   step 1: minimum number of shared barcodes [ default = 3 ]
-             n_links_s2:   step 2: minimum number of shared barcodes [ default = 3 ]
+             n_links_s1:   step 1: minimum number of shared barcodes [ default = 8 ]
+             n_links_s2:   step 2: minimum number of shared barcodes [ default = 8 ]
+             aggressive:   1 - aggressively mapping filtering on small PacBio/ONT contigs; 
+	     		   0 - no aggressive for short read assembly  [ default = 1 ]
              block:        length to determine for nearest neighbours [ default = 50000 ]
              plot:         output image file with barcode length distributions and coverage stats 
-	         mkdup:        output bam file with duplicated reads removed \n"); 
+	     mkdup:        output bam file with duplicated reads removed \n"); 
 
-### Output files:
-
-	output_scaffolds.fasta:      scaffolded fasta file        
-	output_scaffolds.fasta.agp:  scaffolded AGP file        
-	output_scaffolds.fasta.cov:  barcode and read coverage file        
-	barcode-length.png:          barcode length distribution plot        
-	Dupmarked.bam:               sorted bam file with duplicated reads removed
 	    
-### Further information:
 
-     If you have any problems, please contact
- 
-         Zemin Ning ( zn1@sanger.ac.uk )  
 
