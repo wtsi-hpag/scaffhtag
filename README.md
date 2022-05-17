@@ -87,7 +87,7 @@ The genome aligner BWA (http://bio-bwa.sourceforge.net) and SMALT (http://www.sa
 	   
 #####	 Instructions for Installation
  	   https://github.com/wtsi-hpag/scaffhtag
-   	 chmod 777 ema-align.csh 
+   	  
 	   Tools needed 
 	     1. samtools version 1.15 or later 
 	     2. SamHaplotag 
