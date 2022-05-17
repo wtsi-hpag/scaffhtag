@@ -43,20 +43,23 @@
 #define PADCHAR '-'
 #define MAX_N_BRG 50000 
 #define MAX_N_ROW 50000 
-#define Max_N_NameBase 100
-#define Max_N_Pair 100
-static char **S_Name,**R_Name,**R_Name2,**cigarline,**cellname;
-static int *read_index;
+#define Max_N_NameBase 50
+static char **S_Name;
+static int *hit_locus1,*hit_locus2,*hit_length,*hit_barlen,*hit_mscore,*hit_reads;
 
 /* SSAS default parameters   */
 static int IMOD=0;
-static int edge_set=50000;
-
-typedef struct
-{
-       int foffset;
-       int fsindex;
-} SIO;
+static int n_type=0;
+static int barreads=10;
+static int file_flag=2;
+static int break_flag=0;
+static int mp_score=20;
+static int nContig=0;
+static int max_len = 0;
+static int read_len = 150;
+static int num_contig = 0;
+static int min_ratio = 15;
+static int min_cover = 50;
 
 fasta *expt;
 
@@ -110,26 +113,27 @@ int Reverse_Complement_Contig(char c_array[],int num_len)
 
 int main(int argc, char **argv)
 {
-    FILE *namef,*namef2,*namef3;
-    int i,j,k,nSeq,args,num_align,stopflag,offset,n_hits,n_split,itag;
-    int n_contig,n_reads,n_readsMaxctg,nseq,clip1,clip2;
+    FILE *namef;
+    int i,j,nSeq,args,idt;
+    int n_contig,n_reads,n_readsMaxctg,nseq;
     fasta *seq;
-    char **cmatrix(long nrl,long nrh,long ncl,long nch);
     void decodeReadpair(int nSeq);
     void HashFasta_Head(int i, int nSeq);
     void HashFasta_Table(int i, int nSeq);
     void Search_SM(fasta *seq,int nSeq);
     void Assemble_SM(int arr,int brr);
     void Readname_match(fasta *seq,char **argv,int args,int nSeq,int nRead);
-    void Overlap_Process(char **argv,int args,int nSeq);
+    void Barcode_Process(char **argv,int args,int nSeq);
     void Memory_Allocate(int arr);
-    char line[500]={0},bscore[20],score1[20],score2[20],temp[100],readname[Max_N_NameBase];
-    char barcode[500],rdname[500];
+    char line[2000]={0},tempc1[60],cc[60],RC[2],readname[60],*st,*ed;
+    char **cmatrix(long nrl,long nrh,long ncl,long nch);
+    void Read_Pairs(char **argv,int args,fasta *seq,int nSeq);
 
     seq=NULL;
     if(argc < 2)
     {
-      printf("Usage: %s <input name_1 file > <input read_2 file > <out read_2 file> \n",argv[0]);
+      printf("Usage: %s -score 20 -cover 50 -ratio 15 <input_barcode_file> <barcode_sorted file>\n",argv[0]);
+
       exit(1);
     }
 
@@ -142,13 +146,32 @@ int main(int argc, char **argv)
          sscanf(argv[++i],"%d",&IMOD); 
          args=args+2;
        }
-       else if(!strcmp(argv[i],"-edge"))
+       else if(!strcmp(argv[i],"-len"))
        {
-         sscanf(argv[++i],"%d",&edge_set);
+         sscanf(argv[++i],"%d",&read_len);
+         args=args+2;
+       }
+       else if(!strcmp(argv[i],"-score"))
+       {
+         sscanf(argv[++i],"%d",&mp_score);
+         args=args+2;
+       }
+       else if(!strcmp(argv[i],"-ratio"))
+       {
+         sscanf(argv[++i],"%d",&min_ratio);
+         args=args+2;
+       }
+       else if(!strcmp(argv[i],"-cover"))
+       {
+         sscanf(argv[++i],"%d",&min_cover);
+         args=args+2;
+       }
+       else if(!strcmp(argv[i],"-break"))
+       {
+         sscanf(argv[++i],"%d",&break_flag);
          args=args+2;
        }
     }
-
 
     nseq=0;
     if((namef = fopen(argv[args],"r")) == NULL)
@@ -158,102 +181,360 @@ int main(int argc, char **argv)
     }
     while(!feof(namef))
     {
-      fgets(line,500,namef);
+      if(fgets(line,2000,namef) == NULL)
+      {
+//        printf("fgets command error:\n);
+      }	    
       if(feof(namef)) break;
       nseq++;
     }
     fclose(namef); 
    
-    if((read_index = (int *)calloc(nseq,sizeof(int))) == NULL)
+/*
+    nRead=0;
+    if((namef = fopen(argv[args+1],"r")) == NULL)
     {
-      printf("fmate: calloc - ctg_left\n");
+      printf("ERROR main:: args+1 \n");
       exit(1);
     }
-    R_Name = cmatrix(0,nseq+10,0,Max_N_NameBase); 
+    while(!feof(namef))
+    {
+      fgets(line,2000,namef);
+      if(feof(namef)) break;
+      nRead++;
+    }
+    fclose(namef);   */ 
+
+    if((hit_locus1 = (int *)calloc(nseq,sizeof(int))) == NULL)
+    {
+      printf("fmate: calloc - hit_locus\n");
+      exit(1);
+    }
+    if((hit_locus2 = (int *)calloc(nseq,sizeof(int))) == NULL)
+    {
+      printf("fmate: calloc - hit_locus\n");
+      exit(1);
+    }
+    if((hit_length = (int *)calloc(nseq,sizeof(int))) == NULL)
+    {
+      printf("fmate: calloc - hit_locus2\n");
+      exit(1);
+    }
+    if((hit_barlen = (int *)calloc(nseq,sizeof(int))) == NULL)
+    {
+      printf("fmate: calloc - hit_barlen\n");
+      exit(1);
+    }
+    if((hit_mscore = (int *)calloc(nseq,sizeof(int))) == NULL)
+    {
+      printf("fmate: calloc - hit_locus2\n");
+      exit(1);
+    }
+    if((hit_reads = (int *)calloc(nseq,sizeof(int))) == NULL)
+    {
+      printf("fmate: calloc - hit_reads\n");
+      exit(1);
+    }
+
+    nSeq=nseq;
+    S_Name=cmatrix(0,nseq,0,Max_N_NameBase);
 
     if((namef = fopen(argv[args],"r")) == NULL)
     {
-      printf("ERROR main:: args \n");
+      printf("ERROR main:: reads group file \n");
       exit(1);
     }
+
 /*  read the alignment files         */
     i=0;
-    while(fscanf(namef,"%d %s",&read_index[i],R_Name[i])!=EOF)
+    num_contig = 0;
+    while(fscanf(namef,"%s %s %d %d %d %d %d %s %d",cc,S_Name[i],&hit_barlen[i],&hit_length[i],&hit_locus1[i],&hit_locus2[i],&hit_reads[i],cc,&hit_mscore[i])!=EOF)
     {
+        ed = strrchr(S_Name[i],'_');
+        idt = atoi(ed+1);
+        if(idt >= num_contig)
+          num_contig = idt; 
+        if(hit_length[i] > max_len)
+          max_len = hit_length[i];
         i++;
     }
     fclose(namef);
 
 
-    nseq=0;
-    if((namef = fopen(argv[args+1],"r")) == NULL)
-    {
-      printf("ERROR main:: alignment file 2 \n");
-      exit(1);
-    }
-    if((namef2 = fopen(argv[args+2],"w")) == NULL)
-    {
-      printf("ERROR main:: alignment file 2 \n");
-      exit(1);
-    }
+    n_reads=i;
+    Barcode_Process(argv,args,n_reads);
 
-    num_align = 0;
-/*   read the SNP output file         */
-    while(!feof(namef))
-    {
-      int nPair=0,i_ctg,offset,len;
-      char *st,*ptr,line2[500],line3[500],base4[500],base0[500],base1[500],base2[500],base3[500];
- 
-      fgets(line,500,namef);
-      if(feof(namef)) break;
-      strcpy(line2,line);
-      nSeq = num_align/4;
-      if(((num_align)%2)!=0)
-      {
-        if(((num_align-1)%4)==0)
-        {
-          memset(base1,'\0',500);
-          len = strlen(line2);
-          strncpy(base1,line2,len-1);;
-          fprintf(namef2,"@%s\n",R_Name[nSeq]);
-          fprintf(namef2,"%s\n",base1);
-//      printf("align1 %d %s %s\n",num_align,base1,barcode);
-//      printf("align1 %d                 %s\n",num_align,base1);
-        }
-        else
-        {
-          memset(base3,'\0',500);
-          len = strlen(line2);
-          strncpy(base3,line2,len-1);;
-          fprintf(namef2,"%s\n",base3);
-//      printf("align3 %d %s\n",num_align,base3);
-//      printf("align3 %d %s\n",num_align,barcode);
-//      printf("align3 %d                 %s\n",num_align,base3);
-        }
-      }
-      else if((num_align%4)!=0)
-      {
-        memset(base2,'\0',500);
-        len = strlen(line2);
-        strncpy(base2,line2,len-1);;
-        fprintf(namef2,"%s\n",base2);
-//        printf("align2 %d %s\n",num_align,base2);
-      }
-      else
-      {
-//        printf("align0 %d %s\n",num_align,rdname);
-      }
-      num_align++;
-    }
-    fclose(namef);
-    fclose(namef2);
-
+    printf("Job finished for %d reads!\n",nSeq);
     return EXIT_SUCCESS;
 
 }
 /* end of the main */
 
+/*   subroutine to sort out read pairs    */
+/* =============================== */
+void Barcode_Process(char **argv,int args,int nSeq)
+/* =============================== */
+{
+     int i,j,k,m,n,g_size,max_barlen;
+     int num_hits,*hit_bccover,*hit_rdcover,*hit_ctglens,*cov_genome;
+     FILE *namef;
+     float ave_barlen,R50,R60,R70,R80,R90;
+     long num_cover,ave_cover,t_SQbases,t_BCbases,t_RDbases,totalBarlen,totalHalf;
+     void ArraySort_String(int n,char **Pair_Name,int *brr);
+     void ArraySort_Int2(int n, int *arr, int *brr);
+     void ArraySort2_Int2(int n, int *arr, int *brr);
+     int N50,N60,N70,N80,N90,M50,M60,M70,M80,M90;
 
+
+     g_size = max_len+1000;;      
+     if((cov_genome= (int *)calloc(g_size,sizeof(int))) == NULL)
+     {
+       printf("ERROR Memory_Allocate: calloc - hit_maps\n");
+       exit(1);
+     }
+
+     num_contig = num_contig +1;          
+     if((hit_bccover = (int *)calloc(num_contig,sizeof(int))) == NULL)
+     {
+       printf("fmate: calloc - hit_bccover\n");
+       exit(1);
+     }
+     if((hit_rdcover = (int *)calloc(num_contig,sizeof(int))) == NULL)
+     {
+       printf("fmate: calloc - hit_rdcover\n");
+       exit(1);
+     }
+     if((hit_ctglens = (int *)calloc(num_contig,sizeof(int))) == NULL)
+     {
+       printf("fmate: calloc - hit_ctglens\n");
+       exit(1);
+     }
+
+     if((namef = fopen(argv[args+1],"w")) == NULL)
+     {
+       printf("ERROR main:: reads group file \n");
+       exit(1);
+     }
+     num_hits =0;
+
+     t_SQbases = 0;
+     t_BCbases = 0;
+     t_RDbases = 0;
+
+     read_len = 150; 
+     for(i=0;i<(nSeq-1);i++)
+     {
+        int stopflag=0;
+        int idt;
+        char *ed;
+
+        j=i+1;
+        while((j<nSeq)&&(stopflag==0))
+        {
+          if(strcmp(S_Name[i],S_Name[j])==0)
+          {
+            j++;
+          }
+          else
+            stopflag=1;
+        }
+        ed = strrchr(S_Name[i],'_');
+        idt = atoi(ed+1);
+        hit_ctglens[idt] = hit_length[i];
+        num_hits = j-i;
+        if((num_hits>=5)&&(hit_length[i]> 50000)) 
+        {
+          int ctg_len = hit_length[i];
+          int set_cover = 0;
+          int n_reads = 0;
+          long n_bases = 0;
+          int read_cover = 0;
+          int ii,jj,stopflag,mini_hit,mini_los;
+
+          stopflag = 0;
+          for(k=0;k<ctg_len;k++)
+             cov_genome[k] = 0;
+//          memset(cov_genome,0,4*ctg_len);
+//          printf("Scaffold: 2222 %s %d %d %d\n",S_Name[i],i,num_hits,hit_length[i]);
+          num_cover = 0;
+          ave_cover = 0;
+          for(n=i;n<j;n++)
+          {
+             if(hit_mscore[n] >= mp_score)
+             {
+               for(ii=hit_locus1[n];ii<=hit_locus2[n];ii++)
+               {
+                  cov_genome[ii]++;
+                  num_cover++;
+               }
+             }
+             n_reads = n_reads + hit_reads[n];
+//             fprintf(namef,"%s %s %d %s %d\n",S_Name[n],R_Name[idt],hit_locus[idt],M_Name[idt],hit_length[idt]);
+          }
+          ave_cover = num_cover;
+          ave_cover = ave_cover/ctg_len;
+          set_cover = 0.3*ave_cover;
+          n_bases = read_len+read_len;
+          n_bases = n_bases*n_reads;
+          read_cover = n_bases/ctg_len;
+          t_SQbases = t_SQbases + ctg_len;
+          t_BCbases = t_BCbases + num_cover;
+          t_RDbases = t_RDbases + n_bases;
+          hit_bccover[idt] = ave_cover;
+          hit_rdcover[idt] = read_cover;
+          printf("Scaffold: %s %d %ld %d %d %ld %d %d\n",S_Name[i],ctg_len,ave_cover,set_cover,n_reads,n_bases,read_cover,read_len);
+/*          if(strcmp(S_Name[i],"tarseq_205")==0)
+          {
+            for(ii=0;ii<ctg_len;ii++)
+                 printf("xxx: %d %d %ld %d\n",ii,cov_genome[ii],ave_cover,set_cover);
+          }  */
+          for(n=0;n<ctg_len;n++)
+          {
+             if(n<50000)
+               cov_genome[n] = -1;
+             else if(n>(ctg_len-50000))
+               cov_genome[n] = -1;
+             else if(cov_genome[n] >= min_cover)
+             {
+               if(cov_genome[n] >= set_cover)
+                 cov_genome[n] = -1; 
+             } 
+          }
+
+          for(ii=0;ii<ctg_len;ii++)
+          {
+             jj = ii+1;
+             stopflag = 0;
+             while((jj<ctg_len)&&(stopflag==0))
+             {
+               if(cov_genome[jj]>=0)
+               {
+                 jj++;
+               }
+               else
+                 stopflag=1;
+             }
+             if((jj-ii) > 20)
+             {
+               mini_hit = 99999;
+               mini_los = 0;
+               for(n=(ii+1);n<(jj-1);n++)
+               {
+                  if(cov_genome[n] < mini_hit)
+                  {
+                    mini_hit = cov_genome[n];
+                    mini_los = n;
+                  }
+               }
+//               if(mini_hit < min_cover)
+               set_cover = min_ratio*ave_cover;
+               set_cover = set_cover/100;
+//                 printf("www: %d %d %d %ld %d\n",mini_los,ctg_len,mini_hit,ave_cover,set_cover);
+               if(mini_hit < set_cover)
+               {
+                 int idt;
+                 char *ed;
+                 ed = strrchr(S_Name[i],'_');
+                 idt = atoi(ed+1); 
+                 printf("Break: %d %d %d %d %ld %d\n",idt,mini_los,ctg_len,mini_hit,ave_cover,set_cover);
+                 fprintf(namef,"Break: %d %d %d %d %ld\n",idt,mini_los,ctg_len,mini_hit,ave_cover);
+               }
+             }
+             ii = jj-1;
+          }
+        }
+//        else
+//          fprintf(namef,"%s %s %d F %d\n",S_Name[i],R_Name[i],hit_locus[i],hit_length[i]);         
+        i = j - 1; 
+     }
+     fclose(namef);
+
+     if((namef = fopen(argv[args+2],"w")) == NULL)
+     {
+       printf("ERROR main:: reads group file \n");
+       exit(1);
+     }
+
+     totalBarlen = 0;
+     for(i=0;i<nSeq;i++)
+     {
+        hit_reads[i] = i;
+        totalBarlen = totalBarlen + hit_barlen[i];
+     }
+
+     ArraySort2_Int2(nSeq,hit_barlen,hit_reads);
+     max_barlen = hit_barlen[0];
+     ave_barlen = totalBarlen/nSeq;
+     totalHalf = 0;
+     N50 = 0;
+     N60 = 0;
+     N70 = 0;
+     N80 = 0;
+     N90 = 0;
+     fprintf(namef,"Barcode length: n = %d, ave = %f, largest = %d\n",nSeq,ave_barlen,max_barlen);
+
+     for(i=0;i<nSeq;i++)
+     {
+        totalHalf = totalHalf+hit_barlen[i];
+        if((totalHalf >= 0.5*totalBarlen)&&(N50==0))
+        {
+          M50 = 0.5*totalBarlen/(i+1);
+          R50 = M50;
+          R50 = R50/hit_barlen[i];
+          fprintf(namef,"        N50 = %d, n = %d\n",hit_barlen[i],i+1);
+          N50 = 1;
+        }
+        if((totalHalf >= 0.6*totalBarlen)&&(N60==0))
+        {
+          M60 = 0.6*totalBarlen/(i+1);
+          R60 = M60;
+          R60 = hit_barlen[i]/R60;
+          R60 = R60*R50;
+          fprintf(namef,"        N60 = %d, n = %d\n",hit_barlen[i],i+1);
+          N60 = 1;
+        }
+        if((totalHalf >= 0.7*totalBarlen)&&(N70==0))
+        {
+          M70 = 0.7*totalBarlen/(i+1);
+          R70 = M70;
+          R70 = hit_barlen[i]/R70;
+          R70 = R70*R50;
+          fprintf(namef,"        N70 = %d, n = %d\n",hit_barlen[i],i+1);
+          N70 = 1;
+        }
+        if((totalHalf >= 0.8*totalBarlen)&&(N80==0))
+        {
+          M80 = 0.8*totalBarlen/(i+1);
+          R80 = M80;
+          R80 = hit_barlen[i]/R80;
+          R80 = R80*R50;
+          fprintf(namef,"        N80 = %d, n = %d\n",hit_barlen[i],i+1);
+          N80 = 1;
+        }
+        if((totalHalf >= 0.9*totalBarlen)&&(N90==0))
+        {
+          M90 = 0.9*totalBarlen/(i+1);
+          R90 = M90;
+          R90 = hit_barlen[i]/R90;
+          R90 = R90*R50;
+          fprintf(namef,"        N90 = %d, n = %d\n",hit_barlen[i],i+1);
+          N90 = 1;
+          i = nSeq;
+        }
+     }
+
+     fprintf(namef,"        N100 = %d, n = %d\n",hit_barlen[nSeq-1],nSeq);
+
+     fprintf(namef,"Barcode cover: %ld\n",t_BCbases/t_SQbases);
+     fprintf(namef,"Read cover: %ld\n",t_RDbases/t_SQbases);
+
+     for(i=0;i<num_contig;i++)
+     {
+        fprintf(namef,"Cover: tarseq_%d %d %d %d\n",i,hit_ctglens[i],hit_bccover[i],hit_rdcover[i]);
+     }
+     fclose(namef);
+
+}
 
 #define SWAP(a,b) temp=(a);(a)=b;(b)=temp;
 

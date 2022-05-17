@@ -171,36 +171,36 @@ int main(int argc, char **argv)
     {
       int nPair=0,i_ctg,offset,len;
       char *st,*ptr,line2[500],line3[500],base4[500],base0[500],base1[500],base2[500],base3[500];
-
-      if(fgets(line,500,namef) == NULL)
-      {
-//        printf("fgets command error:\n);
-      }      
+ 
+      fgets(line,500,namef);
       if(feof(namef)) break;
       strcpy(line2,line);
-      strcpy(line3,line);
       if(((num_align)%2)!=0)
       {
         if(((num_align-1)%4)==0)
         {
+          memset(barcode,'\0',500);
+          strncpy(barcode,line2,16);
+          st = line2+23;
           len = strlen(line2);
           memset(base1,'\0',500);
-          strncpy(base1,line2,len-1);
+          strncpy(base1,st,len-24);
           fprintf(namef2,"@%s_%s\n",rdname,barcode);
           fprintf(namef2,"%s\n",base1);
-//      printf("align1 %d %s WWW %s\n",num_align,base1,barcode);
+//      printf("align1 %d %s %s\n",num_align,base1,barcode);
 //      printf("align1 %d                 %s\n",num_align,base1);
         }
         else
         {
-          memset(base3,'\0',500);
+          st = line2+23;
           len = strlen(line2);
-          strncpy(base3,line2,len-1);
+          memset(base3,'\0',500);
+          strncpy(base3,st,len-24);
           fprintf(namef2,"%s\n",base2);
           fprintf(namef2,"%s\n",base3);
           nSeq = num_align/4;
-          fprintf(namef3,"%d %s\n",nSeq,rdname);
-//      printf("align3 %d %s\n",nSeq,rdname);
+          fprintf(namef3,"%d %s_%s\n",nSeq,rdname,barcode);
+//      printf("align3 %d %s\n",num_align,base3);
 //      printf("align3 %d %s\n",num_align,barcode);
 //      printf("align3 %d                 %s\n",num_align,base3);
         }
@@ -227,21 +227,14 @@ int main(int argc, char **argv)
            {
              memset(base0,'\0',500);
              strcat(base0,ptr);
-             st = line3+1;
-             len = strlen(line3);
-             memset(rdname,'\0',500);
-             strncpy(rdname,st,len-2);
-//        printf("align0 %d %s\n",nPair,rdname);
-           }
-           else if(i==2)
-           {
-             memset(barcode,'\0',500);
-             memset(base0,'\0',500);
-             strcat(base0,ptr);
-             st = base0+5;
+             st = base0+1;
              len = strlen(base0);
-             strncpy(barcode,st,len-6);
-//        printf("align00 %d %s\n",num_align,rdname,barcode);
+             memset(rdname,'\0',500);
+             if(nPair > 1)
+               strncpy(rdname,st,len-1);
+             else
+               strncpy(rdname,st,len-2);
+//        printf("align0 %d %s\n",num_align,rdname);
            }
         }
       }

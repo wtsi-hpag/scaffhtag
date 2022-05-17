@@ -48,7 +48,7 @@
 #define Max_N_Pair 100
 static char bindir[2000];
 static char tmpdir[2000];
-static char **S_Name,**R1_Name,**R2_Name,**R1_Name1,**R2_Name1,**R1_Name2,**R2_Name2;
+static char **CM_Name,**R1_Name,**R2_Name,**R1_Name1,**R2_Name1,**R_Name;
 static int *insert_siz,*insert_dev,*core_list,*ctg_list,*ctg_head,*read2contig;
 static int *readIndex,*reads_tag1,*reads_tag2;
 
@@ -57,7 +57,7 @@ static int n_group=0;
 static int num_links=8;
 static int n_gzip=1;
 static int gap_len = 20;
-static int n_nodes = 16;
+static int n_nodes = 50;
 static int n_files = 1000;
 static int run_align = 1;
 
@@ -71,21 +71,14 @@ typedef struct
 int main(int argc, char **argv)
 {
     int i,nSeq,args,n_files,n_r1,n_r2;
-    char *st,*ed,named[4];
+    char *st,*ed,named[4],namedh[4],namedn[5],namedp[4];
     char **cmatrix(B64_long nrl,B64_long nrh,B64_long ncl,B64_long nch);
     void ArraySort_String2(int n,char **Pair_Name,int *brr);
     fasta *seq;
     FILE *fp,*namef,*namef2;
     int size_file;
     int m_score,n_nodes,n_debug,num_sigma;
-    void decodeReadpair(int nSeq);
-    void HashFasta_Head(int i, int nSeq);
-    void HashFasta_Table(int i, int nSeq);
-    void Search_SM(fasta *seq,int nSeq);
-    void Assemble_SM(int arr,int brr);
     void Read_Index(int nSeq,char *namefile);
-    void Read_Group(fasta *seq,int nSeq,int nRead,int cindex);
-    void File_Output(int aaa);
     void Memory_Allocate(int arr);
     char* substring(char*, int, int);
     char readname[2000],line[2000],tempa[2000],tempc[2000],syscmd[2000],file_tarseq[2000],file_scaff[2000],workdir[2000];
@@ -99,11 +92,20 @@ int main(int argc, char **argv)
     named[0] = '"';
     named[1] = '_';
     named[2] = '"';
+    namedh[0] = '"';
+    namedh[1] = '@';
+    namedh[2] = '"';
+    namedn[0] = '"';
+    namedn[1] = '\n';
+    namedn[2] = '"';
+    namedp[0] = '"';
+    namedp[1] = '+';
+    namedp[2] = '"';
     if(argc < 2)
     {
          printf("Usage: <Input_read_file> <Output_read1> <Output_read2>\n");
-         printf("q1=/lustre/scratch117/sciops/team117/hpag/zn1/project/fish/reads/test/22047_4_AACCGTAA_S16_L004_R1_001.fastq.gz\n");
-         printf("q2=/lustre/scratch117/sciops/team117/hpag/zn1/project/fish/reads/test/22047_4_AACCGTAA_S16_L004_R2_001.fastq.gz\n");
+         printf("/lustre/scratch117/sciops/team117/hpag/zn1/project/fish/reads/test/43969#17.cram\n");
+         printf("/lustre/scratch117/sciops/team117/hpag/zn1/project/fish/reads/test/43969#18.cram\n");
          printf("...\n");
          exit(1);
     }
@@ -125,8 +127,8 @@ int main(int argc, char **argv)
        else if(!strcmp(argv[i],"-help"))
        {
          printf("Usage: <Input_read_file> <Output_read1> <Output_read2>\n");
-         printf("q1=/lustre/scratch117/sciops/team117/hpag/zn1/project/fish/reads/test/22047_4_AACCGTAA_S16_L004_R1_001.fastq.gz\n");
-         printf("q2=/lustre/scratch117/sciops/team117/hpag/zn1/project/fish/reads/test/22047_4_AACCGTAA_S16_L004_R2_001.fastq.gz\n");
+         printf("/lustre/scratch117/sciops/team117/hpag/zn1/project/fish/reads/test/43969#17.cram\n");
+         printf("/lustre/scratch117/sciops/team117/hpag/zn1/project/fish/reads/test/43969#18.cram\n");
          printf("...\n");
          exit(1);
        }
@@ -200,12 +202,10 @@ int main(int argc, char **argv)
       exit(1);
     }
 
+    CM_Name=cmatrix(0,n_files+10,0,2000);
     R1_Name=cmatrix(0,n_files+10,0,2000);
     R2_Name=cmatrix(0,n_files+10,0,2000);
-    R1_Name1=cmatrix(0,n_files+10,0,2000);
-    R2_Name1=cmatrix(0,n_files+10,0,2000);
-    R1_Name2=cmatrix(0,n_files+10,0,2000);
-    R2_Name2=cmatrix(0,n_files+10,0,2000);
+    R_Name=cmatrix(0,n_files+10,0,2000);
 
     if((fp = fopen(argv[args],"r")) == NULL)
     {
@@ -220,46 +220,20 @@ int main(int argc, char **argv)
     {
         int clen = strlen(readname);
         char *st,*ed;
-        st = strchr(readname,'=');;
-        ed = strrchr(readname,'/');
-        if((strncmp(readname,"q1=",3))==0)
-        {
-          strcpy(R1_Name[n_r1],st+1);
-          strcpy(R1_Name1[n_r1],ed+1);
-          if((strncmp(substring(readname,clen-2,clen),".gz",3))==0)
-            reads_tag1[n_r1] = 1;
-          else
-            reads_tag1[n_r1] = 2;
-//      printf("file: %d %d %s %s\n",clen,n_r1,R1_Name1[n_r1],substring(readname,clen-2,clen));
-          n_r1++;
-        }
-        else if((strncmp(readname,"q2=",3))==0) 
-        {
-          strcpy(R2_Name[n_r2],st+1);
-          strcpy(R2_Name1[n_r2],ed+1);
-          if((strncmp(substring(readname,clen-2,clen),".gz",3))==0)
-            reads_tag2[n_r2] = 1;
-          else
-            reads_tag2[n_r2] = 2;
-//      printf("file: %d %s \n",n_r2,R2_Name[n_r2]);
-          n_r2++;
-        }
+        strcpy(CM_Name[n_r1],readname);
+	st = strrchr(readname,'/');;
+        ed = strrchr(readname,'.');
+        strncpy(R_Name[n_r1],st+1,ed-st-1);
+        strcat(R_Name[n_r1],".name");
+        strncpy(R1_Name[n_r1],st+1,ed-st-1);
+        strcat(R1_Name[n_r1],"_1.fastq");
+        strncpy(R2_Name[n_r1],st+1,ed-st-1);
+        strcat(R2_Name[n_r1],"_2.fastq");
+	n_r1++;
         i++;
     }
     fclose(fp);
 
-    if(n_r1 != n_r2)
-    {
-      printf("Number of read1 files: %d NOT equal to read2 files: %d\n",n_r1,n_r2);
-      memset(syscmd,'\0',2000);
-      sprintf(syscmd,"rm -rf %s > /dev/null",workdir);
-      if(system(syscmd) == -1)
-      {
-//      printf("System command error:\n);
-      }
-      exit(1);
-    }
-    
     if(chdir(workdir) == -1)
     {
       printf("System command error: chdir\n");
@@ -286,64 +260,40 @@ int main(int argc, char **argv)
 
     for(i=0;i<n_r1;i++)
     {
-
+       int clen = strlen(R1_Name1[i]);
        memset(syscmd,'\0',2000);
-       sprintf(syscmd,"cp %s %s",R1_Name[i],workdir);
-       if(system(syscmd) == -1)
-       {
-         printf("System command error:\n");
-       }
-       if(reads_tag1[i]==1)
-       {
-         int clen = strlen(R1_Name1[i]);
-         memset(syscmd,'\0',2000);
-         sprintf(syscmd,"gunzip %s",R1_Name1[i]);
-         if(system(syscmd) == -1)
-         {
-           printf("System command error:\n");
-         }
-         strncpy(R1_Name2[i],R1_Name1[i],clen-3);
-       }
-       else
-         strcpy(R1_Name2[i],R1_Name1[i]);
-
-       memset(syscmd,'\0',2000);
-       sprintf(syscmd,"%s/scaff_BC-reads-1 %s test.RC1 test.name > try.out",bindir,R1_Name2[i]);
+       sprintf(syscmd,"%s/process-htag.csh %s %s %s %s > try.out",bindir,CM_Name[i],bindir,R1_Name[i],R2_Name[i]);
        if(system(syscmd) == -1)
        {
          printf("System command error:\n");
        }
 
        memset(syscmd,'\0',2000);
-       printf("cat test.name  | awk '%s%s%s' > %s.name ","{print $1,$2",named,"substr($4,6,27)}",R1_Name2[i]);
-       sprintf(syscmd,"cat test.name  | awk '%s%s%s%s%s' > %s.name ","{print $1,$2",named,"substr($6,6,20)",named,"substr($4,6,27)}",R1_Name2[i]);
-       if(system(syscmd) == -1)
-       {
-         printf("System command error:\n");
-       }
-       
-       memset(syscmd,'\0',2000);
-       sprintf(syscmd,"%s/scaff_BC-reads-2 %s.name %s %s.RC1 > try.out",bindir,R1_Name2[i],R1_Name2[i],R1_Name2[i]);
+       sprintf(syscmd,"%s/scaff_BC-reads-2 read1.name %s try_2.fastq > try.out",bindir,R2_Name[i]);
        if(system(syscmd) == -1)
        {
          printf("System command error:\n");
        }
 
        memset(syscmd,'\0',2000);
-       sprintf(syscmd,"rm -rf %s ",R1_Name2[i]);
+       sprintf(syscmd,"mv try_2.fastq %s",R2_Name[i]);
        if(system(syscmd) == -1)
        {
          printf("System command error:\n");
        }
 
-       if(n_gzip == 1)
+       memset(syscmd,'\0',2000);
+       sprintf(syscmd,"%s/pigz -p %d %s",bindir,n_nodes,R1_Name[i]);
+       if(system(syscmd) == -1)
        {
-         memset(syscmd,'\0',2000);
-         sprintf(syscmd,"%s/pigz -p %d %s.RC1",bindir,n_nodes,R1_Name2[i]);
-         if(system(syscmd) == -1)
-         {
-           printf("System command error:\n");
-         }
+         printf("System command error:\n");
+       }
+
+       memset(syscmd,'\0',2000);
+       sprintf(syscmd,"%s/pigz -p %d %s",bindir,n_nodes,R2_Name[i]);
+       if(system(syscmd) == -1)
+       {
+         printf("System command error:\n");
        }
     }
 
@@ -351,12 +301,9 @@ int main(int argc, char **argv)
     memset(syscmd,'\0',2000);
     for(i=0;i<n_r1;i++)
     {
-       int clen = strlen(R1_Name2[i]);
-       strncat(readname,R1_Name2[i],clen);
-       if(n_gzip == 0)
-         strncat(readname,".RC1 ",5);  
-       else
-         strncat(readname,".RC1.gz ",8);  
+       int clen = strlen(R1_Name[i]);
+       strncat(readname,R1_Name[i],clen);
+       strncat(readname,".gz ",4);  
     }
 
     printf("cat read files %s\n",readname);
@@ -380,63 +327,13 @@ int main(int argc, char **argv)
       printf("System command error:\n");
     }
 
-    for(i=0;i<n_r2;i++)
-    {
-       memset(syscmd,'\0',2000);
-       sprintf(syscmd,"cp %s %s",R2_Name[i],workdir);
-       if(system(syscmd) == -1)
-       {
-         printf("System command error:\n");
-       }
-       if(reads_tag2[i]==1)
-       {
-         int clen = strlen(R2_Name1[i]);
-         memset(syscmd,'\0',2000);
-         sprintf(syscmd,"gunzip %s",R2_Name1[i]);
-         if(system(syscmd) == -1)
-         {
-           printf("System command error:\n");
-         }
-         strncpy(R2_Name2[i],R2_Name1[i],clen-3);
-       }
-       else
-         strcpy(R2_Name2[i],R2_Name1[i]);
-
-       memset(syscmd,'\0',2000);
-       sprintf(syscmd,"%s/scaff_BC-reads-2 %s.name %s %s.RC2 > try.out",bindir,R1_Name2[i],R2_Name2[i],R2_Name2[i]);
-       if(system(syscmd) == -1)
-       {
-         printf("System command error:\n");
-       }
-
-       memset(syscmd,'\0',2000);
-       sprintf(syscmd,"rm -rf %s %s.name",R2_Name2[i],R1_Name2[i]);
-       if(system(syscmd) == -1)
-       {
-         printf("System command error:\n");
-       }
-       if(n_gzip == 1)
-       {
-         memset(syscmd,'\0',2000);
-         sprintf(syscmd,"gzip %s.RC2",R2_Name2[i]);
-         sprintf(syscmd,"%s/pigz -p %d %s.RC2",bindir,n_nodes,R2_Name2[i]);
-         if(system(syscmd) == -1)
-         {
-           printf("System command error:\n");
-         }
-       }
-    }
- 
     memset(readname,'\0',2000);
     memset(syscmd,'\0',2000);
-    for(i=0;i<n_r2;i++)
+    for(i=0;i<n_r1;i++)
     {
-       int clen = strlen(R2_Name2[i]);
-       strncat(readname,R2_Name2[i],clen);
-       if(n_gzip == 0)
-         strncat(readname,".RC2 ",5);  
-       else
-         strncat(readname,".RC2.gz ",8);  
+       int clen = strlen(R2_Name[i]);
+       strncat(readname,R2_Name[i],clen);
+       strncat(readname,".gz ",4);  
     }
 
     printf("cat read files %s\n",readname);
@@ -485,192 +382,6 @@ int main(int argc, char **argv)
 /* end of the main */
 
 
-
-/*   subroutine to sort out read pairs    */
-/* =============================== */
-void Read_Index(int nSeq, char *namefile)
-/* =============================== */
-{
-     int i,j,nseq;
-     int i_reads,n_reads,c_reads,insertsize=0;
-     FILE *namef;
-     char *ptr;
-     char line[500];
-     char **cmatrix(B64_long nrl,B64_long nrh,B64_long ncl,B64_long nch);
-
-
-     if((namef = fopen(namefile,"r")) == NULL)
-     {
-       printf("ERROR main:: reads group file \n");
-       exit(1);
-     }
-     nseq = 0;
-     i_reads = 0;
-     n_reads = 0;
-     c_reads = 0;
-     while(!feof(namef))
-     {
-       if(fgets(line,500,namef) == NULL)
-            printf("Data input file problem!\n");
-       if(feof(namef)) break;
-       nseq++;
-     }
-     fclose(namef);
-
-     nseq = 2*nseq;
-     if((ctg_head = (int *)calloc(nseq,sizeof(int))) == NULL)
-     {
-       printf("fmate: calloc - ctg_head\n");
-       exit(1);
-     }
-     if((ctg_list = (int *)calloc(nseq,sizeof(int))) == NULL)
-     {
-       printf("fmate: calloc - ctg_list\n");
-       exit(1);
-     }
-     if((core_list = (int *)calloc(nseq,sizeof(int))) == NULL)
-     {
-       printf("fmate: calloc - core_list\n");
-       exit(1);
-     }
-     if((read2contig = (int *)calloc(nseq,sizeof(int))) == NULL)
-     {
-       printf("fmate: calloc - read2contig\n");
-       exit(1);
-     }
-
-     nseq = nseq*3;
-     S_Name=cmatrix(0,nseq,0,Max_N_NameBase);
-     if((insert_siz = (int *)calloc(nseq,sizeof(int))) == NULL)
-     {
-       printf("fmate: calloc - insert\n");
-       exit(1);
-     }
-     if((insert_dev = (int *)calloc(nseq,sizeof(int))) == NULL)
-     {
-       printf("fmate: calloc - insert\n");
-       exit(1);
-     }
- 
-     if((namef = fopen(namefile,"r")) == NULL)
-     {
-       printf("ERROR main:: reads group file \n");
-       exit(1);
-     }
-
-     j = 0;
-     insertsize = 0;
-     while(!feof(namef))
-     {
-       int nPair=0,len=0;
-       char line2[500],line3[500],base[500];
-
-       if(fgets(line,500,namef) == NULL)
-            printf("Data input file problem!\n");
-       if(feof(namef)) break;
-       strcpy(line2,line);
-       strcpy(line3,line);
-       insertsize = 0;
-       if((strncmp(line,"readnames",9))==0)
-       {
-         i=0;
-         c_reads = 0;
-         for(ptr=strtok(line2," ");ptr!=NULL;ptr=strtok((char *)NULL," "),i++)
-         {
-            if(i==5)
-            {
-                memset(base,'\0',500);
-//                len=strlen(ptr);
-//                strncpy(base,ptr,len-1);
-                strcat(base,ptr);
-                c_reads = atoi(base);
-            }
-         }
-//       printf("creads: %d %d\n",c_reads,n_reads);
-         if(n_group>0)
-           ctg_list[n_group-1]=n_reads;
-         n_group++;
-         n_reads = 0;
-       }
-       else
-       {      
-         for(ptr=strtok(line," ");ptr!=NULL;ptr=strtok((char *)NULL," "),nPair++)
-         {
-         }
-         i=0;
-         for(ptr=strtok(line3," ");ptr!=NULL;ptr=strtok((char *)NULL," "),i++)
-         {
-            if(nPair>1)
-            {
-              if(i==(nPair-2))
-              {
-                memset(base,'\0',500);
-                strcat(base,ptr);
-                insertsize = atoi(base);
-              }
-            }
-         }
-         i=0;
-         j=0;
-         for(ptr=strtok(line2," ");ptr!=NULL;ptr=strtok((char *)NULL," "),i++)
-         {
-            if(i==0)
-            {
-
-              len=strlen(ptr);
-              if(nPair==1)
-                strncpy(S_Name[i_reads],ptr,len-1);
-              else
-                strncpy(S_Name[i_reads],ptr,len);
-//       printf("reads: %d %d %d %d %s\n",j,i_reads,insertsize,c_reads,S_Name[i_reads]);
-              i_reads++;
-              j++;
-            }
-//            else if(insertsize<50000)
-            else if((insertsize<50000)&&(c_reads>4))
-            {
-              if(i==1)
-              {
-                len=strlen(ptr);
-                strncpy(S_Name[i_reads],ptr,len);
-                i_reads++;
-                j++;
-              }
-              else if((i==2)&&(i<(nPair-2)))
-              {
-                len=strlen(ptr);
-                strncpy(S_Name[i_reads],ptr,len);
-                i_reads++;
-                j++;
-              }
-/*              else if(i==(nPair-2))
-              {
-                memset(base,'\0',500);
-                strcat(base,ptr);
-                for(k=0;k<j;k++)
-                   insert_siz[i_reads-k-1] = atoi(base);
-              }
-              else if(i==(nPair-1))
-              {
-                memset(base,'\0',500);
-                strcat(base,ptr);
-                for(k=0;k<j;k++)
-                   insert_dev[i_reads-k-1] = atoi(base);
-              }   */
-            }
-         }
-         n_reads = n_reads+j;
-       }
-       c_reads++;
-     }
-     fclose(namef);
-     printf("contig: %d %d\n",n_reads,i_reads);
-     ctg_list[n_group-1]=n_reads;
-     ctg_head[0]=0;
-     for(i=1;i<n_group;i++)
-        ctg_head[i]=ctg_head[i-1]+ctg_list[i-1];
-      
-}
 
 #define SWAP(a,b) temp=(a);(a)=b;(b)=temp;
 

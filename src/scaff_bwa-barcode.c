@@ -58,8 +58,7 @@ static int n_type=0;
 static int barreads=10;
 static int file_flag=2;
 static int tiles_flag=0;
-static int edge_set=2;
-static int edge_flag=0;
+static int frank_flag=0;
 static int nContig=0;
 static int max_len = 100000;
 typedef struct
@@ -104,10 +103,9 @@ int main(int argc, char **argv)
          sscanf(argv[++i],"%d",&n_type); 
          args=args+2;
        }
-       else if(!strcmp(argv[i],"-edge"))
+       else if(!strcmp(argv[i],"-frank"))
        {
-         sscanf(argv[++i],"%d",&edge_set);
-         edge_flag=1;
+         sscanf(argv[++i],"%d",&frank_flag);
          args=args+2;
        }
        else if(!strcmp(argv[i],"-tile"))
@@ -187,22 +185,22 @@ int main(int argc, char **argv)
     }
     fclose(namef);
 
-    if((hit_index = (int *)calloc(n_reads,sizeof(int))) == NULL)
+    if((hit_index = (int *)calloc(n_reads+100,sizeof(int))) == NULL)
     {
       printf("fmate: calloc - ctg_index\n");
       exit(1);
     }
-    if((ctg_index = (int *)calloc(nseq,sizeof(int))) == NULL)
+    if((ctg_index = (int *)calloc(nseq+nseq,sizeof(int))) == NULL)
     {
       printf("fmate: calloc - ctg_index\n");
       exit(1);
     }
-    if((ctg_list = (int *)calloc(nseq,sizeof(int))) == NULL)
+    if((ctg_list = (int *)calloc(nseq+10,sizeof(int))) == NULL)
     {
       printf("fmate: calloc - ctg_list\n");
       exit(1);
     }
-    if((ctg_head = (int *)calloc(nseq,sizeof(int))) == NULL)
+    if((ctg_head = (int *)calloc(nseq+10,sizeof(int))) == NULL)
     {
       printf("fmate: calloc - ctg_head\n");
       exit(1);
@@ -245,10 +243,14 @@ int main(int argc, char **argv)
         int idt,idd;
         memset(rdname,'\0',100);
         st = temp2;
-        ed= strrchr(temp2,'Z');
-        strcpy(rdname,ed+2);
+        st= strrchr(temp2,'Z');
+        ed= strrchr(temp2,'-');
         idt = hit_index[i];
-        idd = ctg_index[idt]; 
+        idd = ctg_index[idt];
+        if(frank_flag == 0)	
+          strncpy(rdname,st+2,16);
+	else
+          strncpy(rdname,st+2,12);
         fprintf(namef2,"%s_%s %s %s %s %s\n",temp1,rdname,temp3,R_Name1[idd],temp5,temp6);
         i++;
     }
@@ -308,7 +310,7 @@ void Mapping_Process(char **argv,int args,int nSeq,int nRead)
              hit_index[n] = k;
           strcpy(T_Name[k],S_Name[i]);
           ctg_list[k] = num_hits;
-//            printf("www: %s %s %d\n",S_Name[i],R_Name1[k],j-i);
+//            printf("www: %s %s %d %d %d\n",S_Name[i],R_Name1[k],j-i,i,nRead);
           k++;
         }
         else
@@ -378,7 +380,7 @@ void Mapping_Process(char **argv,int args,int nSeq,int nRead)
              if(readIndex[k]<nSeq)
              {
                ctg_index[readIndex[k]] = idd-nSeq;
-//         printf("name: %d %s\n",k,DBname[k]);
+//         printf("name: %d %d %s\n",k,n_scaffs,DBname[k]);
                num_rd_find++;
              }
           }

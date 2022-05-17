@@ -71,8 +71,10 @@ static int mscore = 20;
 static int n_longread = 1;
 static int run_align = 1;
 static int plot_10x = 0;
-static int mkdup_flag = 1;
+static int mkdup_flag = 0;
+static int cram_flag = 0;
 static int min_len = 3000;
+static int frank_flag = 0;
 static int sam_flag = 0;
 static int rc_flag = 0;
 
@@ -177,10 +179,26 @@ int main(int argc, char **argv)
          sscanf(argv[++i],"%s",samname);
          args=args+2;
        }
+       else if(!strcmp(argv[i],"-frank"))
+       {
+         run_align = 0;
+         sam_flag = 2;
+         frank_flag = 1;
+         sscanf(argv[++i],"%s",samname);
+         args=args+2;
+       }
        else if(!strcmp(argv[i],"-bam"))
        {
          run_align = 0;
          sam_flag = 2;
+         sscanf(argv[++i],"%s",bamname);
+         args=args+2;
+       }
+       else if(!strcmp(argv[i],"-cram"))
+       {
+         run_align = 0;
+         sam_flag = 2;
+	 cram_flag = 1;
          sscanf(argv[++i],"%s",bamname);
          args=args+2;
        }
@@ -569,16 +587,29 @@ int main(int argc, char **argv)
       else if(sam_flag == 2)
       {
         memset(syscmd,'\0',2000);
-//          sprintf(syscmd,"%s/samtools view %s | egrep tarseq_ | awk '%s' | egrep -v '^@' > align.dat",bindir,bamname,"($2<100)&&($5>0){print $1,$2,$3,$4,$5}");
+//          sprintf(syscmd,"%s/samtools view -@ %d %s | egrep tarseq_ | awk '%s' | egrep -v '^@' > align.dat",bindir,n_nodes,bamname,"($2<100)&&($5>0){print $1,$2,$3,$4,$5}");
         if(n_longread ==0)
-          sprintf(syscmd,"%s/samtools view %s | awk '%s' | egrep -v '^@' > align0.dat",bindir,bamname,"($4!=0)&&($2<100)&&($5>0){print $1,$12,$2,$3,$4,$5}");
-        else
-          sprintf(syscmd,"%s/samtools view %s | awk '%s' | egrep -v '^@' > align0.dat",bindir,bamname,"($4!=0)&&($2<100)&&($5>=0){print $1,$12,$2,$3,$4,$5}");
-        printf("%s\n",syscmd);
+	{
+          if(frank_flag == 1)
+            sprintf(syscmd,"%s/samtools view -@ %d %s | awk '%s' | egrep 'BX:Z' > align0.dat",bindir,n_nodes,bamname,"($4!=0)&&($2<100)&&($5>0){if(length($19)>10) print $1,$19,$2,$3,$4,$5; else print $1,$18,$2,$3,$4,$5}");
+	  else
+            sprintf(syscmd,"%s/samtools view -@ %d %s | awk '%s' | egrep 'BX:Z' > align0.dat",bindir,n_nodes,bamname,"($4!=0)&&($2<100)&&($5>0){print $1,$12,$2,$3,$4,$5}");
+	}
+	else
+	{
+          if(frank_flag == 1)
+            sprintf(syscmd,"%s/samtools view -@ %d %s | awk '%s' | egrep 'BX:Z' > align0.dat",bindir,n_nodes,bamname,"($4!=0)&&($2<100)&&($5>=0){if(length($19)>10) print $1,$19,$2,$3,$4,$5; else print $1,$18,$2,$3,$4,$5}");
+	  else
+            sprintf(syscmd,"%s/samtools view -@ %d %s | awk '%s' | egrep 'BX:Z' > align0.dat",bindir,n_nodes,bamname,"($4!=0)&&($2<100)&&($5>=0){print $1,$12,$2,$3,$4,$5}");
+	}
+	printf("%s\n",syscmd);
     
         RunSystemCommand(syscmd);
         memset(syscmd,'\0',2000);
-        sprintf(syscmd,"%s/scaff_bwa-barcode tarseq.tag align0.dat align.dat > try.out",bindir);
+	if(frank_flag == 1)
+          sprintf(syscmd,"%s/scaff_bwa-barcode2 tarseq.tag align0.dat align.dat > try.out",bindir);
+	else
+          sprintf(syscmd,"%s/scaff_bwa-barcode tarseq.tag align0.dat align.dat > try.out",bindir);
         printf("%s\n",syscmd);
         RunSystemCommand(syscmd);
       }
@@ -678,15 +709,15 @@ int main(int argc, char **argv)
     {
       sprintf(file_mkdup,"%s/%s",tempa,mkdup);
       memset(syscmd,'\0',2000);
-      sprintf(syscmd,"%s/samtools view -bS align.sam > Sorted_names.bam ",bindir);
+      sprintf(syscmd,"%s/samtools view -@ %d -bS align.sam > Sorted_names.bam ",bindir,n_nodes);
       RunSystemCommand(syscmd);
 
       memset(syscmd,'\0',2000);
-      sprintf(syscmd,"%s/samtools fixmate -m Sorted_names.bam Fixmate.bam > try.out",bindir);
+      sprintf(syscmd,"%s/samtools fixmate -@ %d -m Sorted_names.bam Fixmate.bam > try.out",bindir,n_nodes);
       RunSystemCommand(syscmd);
 
       memset(syscmd,'\0',2000);
-      sprintf(syscmd,"%s/samtools sort -o Sorted.bam Fixmate.bam > try.out",bindir);
+      sprintf(syscmd,"%s/samtools sort -@ %d -o Sorted.bam Fixmate.bam > try.out",bindir,n_nodes);
       RunSystemCommand(syscmd);
 
       memset(syscmd,'\0',2000);
@@ -694,7 +725,7 @@ int main(int argc, char **argv)
       RunSystemCommand(syscmd);
 
       memset(syscmd,'\0',2000);
-      sprintf(syscmd,"%s/samtools markdup -r -s Sorted.bam Dupmarked.bam > try.out",bindir);
+      sprintf(syscmd,"%s/samtools markdup -@ %d -r -s Sorted.bam Dupmarked.bam > try.out",bindir,n_nodes);
       RunSystemCommand(syscmd);
 
       memset(syscmd,'\0',2000);
@@ -725,7 +756,7 @@ int main(int argc, char **argv)
       RunSystemCommand(syscmd);
 
       memset(syscmd,'\0',2000);
-      sprintf(syscmd,"%s/scaff_barcode-length -reads 3 align.size5 align.length-5 > try.out",bindir);
+      sprintf(syscmd,"%s/scaff_barcode-length -reads 5 align.size5 align.length-5 > try.out",bindir);
       RunSystemCommand(syscmd);
 
 /*
