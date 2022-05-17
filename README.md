@@ -23,7 +23,7 @@ CC= /software/gcc-4.9.2/bin/gcc in the makefile
 
 
     $ git clone  https://github.com/wtsi-hpag/scaffhtag.git 
-    $ cd htag
+    $ cd scaffhtag
     $ bash install.sh
 		
 If everything compiled successfully you must see the final comment: 
