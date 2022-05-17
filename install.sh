@@ -111,6 +111,7 @@ fi
 
     chmod +x $bindir/samtools
     chmod +x $bindir/pigz
+    chmod +x $bindir/ema-align.csh
 
 ###### Compile scaffhtag sources ######
 
