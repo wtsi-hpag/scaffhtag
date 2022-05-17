@@ -1,4 +1,4 @@
-# scaffhtag v1.0
+# scaffhtag v2.0
 Pipeline for scaffolding genome assemblies using haplotagging reads.
 
 Pipeline steps:
@@ -36,10 +36,10 @@ The genome aligner BWA (http://bio-bwa.sourceforge.net) and SMALT (http://www.sa
 ### Run the pipelines
 
 #### Prepare read files with barcode error correction and extraction
-           $ /full/path/to/htag/src/scaff_read input.dat htag-reads_RC1.fastq.gz htag-reads_RC2.fastq.gz \
+           $ /full/path/to/htag/src/scaff_read input.dat htag-reads_BC1.fastq.gz htag-reads_BC2.fastq.gz \
 	       input.dat               - input a text file to point the locations of the reads in cram files \
-               htag-reads_RC1.fastq.gz - output read file                       \
-	       htag-reads_RC1.fastq.gz - output read file                      \
+               htag-reads_BC1.fastq.gz - output read file                       \
+	       htag-reads_BC1.fastq.gz - output read file                      \
 
 	       input.dat file shoul be like with full path:
 		/lustre/scratch117/sciops/team117/hpag/zn1/project/HiC/QC/run-43969/oak1/43969#17.cram \
@@ -51,12 +51,12 @@ The genome aligner BWA (http://bio-bwa.sourceforge.net) and SMALT (http://www.sa
 		/lustre/scratch117/sciops/team117/hpag/zn1/project/HiC/QC/run-43969/oak1/43969#23.cram \
 		/lustre/scratch117/sciops/team117/hpag/zn1/project/HiC/QC/run-43969/oak1/43969#24.cram \ 
 
-#### Run scaffhtag:
+#### Run scaffhtag with paired reads htag-reads_BC1.fastq.gz htag-reads_BC2.fastq.gz:
            $ /full/path/to/htag/src/scaffhtag -nodes <nodes> -align <aligner> -score <score> \
 	   	 -matrix <matrix_size> -read-s1 <min_reads_s1> -read-s2 <min_reads_s2> \
 		 -edge <edge_len> -link-s1 <n_links_s1> -link-s2 <n_links_s2> -block <block>  \
 		 [ -mkdup Dupmarked.bam ] [ -plot barcode-length.png ] \
-		 draft-assembly.fasta htag-reads_RC1.fastq.gz htag-reads_RC2.fastq.gz output_scaffolds.fasta
+		 draft-assembly.fasta htag-reads_BC1.fastq.gz htag-reads_BC2.fastq.gz output_scaffolds.fasta
 
 	       Parameters:
              nodes:        number of CPUs requested  [ default = 30 ]
@@ -74,19 +74,24 @@ The genome aligner BWA (http://bio-bwa.sourceforge.net) and SMALT (http://www.sa
              plot:         output image file with barcode length distributions and coverage stats 
 	     mkdup:        output bam file with duplicated reads removed \n"); 
 
+
+#### Run scaffhtag with aligned and sorted bam file: aligned.bam  
+           $ /full/path/to/htag/src/scaffhtag -nodes <nodes> -plot barcode-length.png -bam /lustre/scratch117/sciops/team117/hpag/zn1/aligned.bam draft-assembly.fasta output_scaffolds.fasta \
+
+
 #### Run alignment with ema:
            $ ./ema-align.csh <input_cram_file> <Output_workdirectory> <bwa_index> <output_bam_file> \
 	   
-	 Instructions for Installation
- 	  https://github.com/wtsi-hpag/scaffhtag
+#####	 Instructions for Installation
+ 	   https://github.com/wtsi-hpag/scaffhtag
    	 chmod 777 ema-align.csh 
-	  Tools needed 
-	    1. samtools version 1.15 or later 
-	    2. SamHaplotag 
- 	     https://github.com/wtsi-hpag/SamHaplotag  
-	    3. bwa version 0.7.12-r1044 or later
-	    4. ema 
-	       https://github.com/arshajii/ema 
+	   Tools needed 
+	     1. samtools version 1.15 or later 
+	     2. SamHaplotag 
+ 	        https://github.com/wtsi-hpag/SamHaplotag  
+	     3. bwa version 0.7.12-r1044 or later
+	     4. ema 
+	        https://github.com/arshajii/ema 
 	 Use of bioconda for installation 
 	 Reference index 
 	 -- Say you have a reference genome assembly  
@@ -96,8 +101,8 @@ The genome aligner BWA (http://bio-bwa.sourceforge.net) and SMALT (http://www.sa
 	   samtools faidx Oak-chr.fasta
 	 Alignment 
 	 -- Say you have cram file 43969#17.cram and Oak-chr.fasta index 
-	   /nfs/users/nfs_z/zn1/bin/ema-align.csh 43969#17.cram newsplit-17 /lustre/scratch117/sciops/team117/hpag/zn1/project/HiC/QC/run-43969/oak1/bindex/Oak-chr.fasta ema_final-17.bam
-	 Your output file ema_final-17.bam will be in newsplit-17.  
+	   /nfs/users/nfs_z/zn1/bin/ema-align.csh 43969#17.cram readsplit-17 /lustre/scratch117/sciops/team117/hpag/zn1/project/HiC/QC/run-43969/oak1/bindex/Oak-chr.fasta ema_final-17.bam
+	 Your output file ema_final-17.bam will be in readsplit-17.  
   
  
 
