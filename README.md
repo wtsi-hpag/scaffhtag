@@ -76,11 +76,14 @@ The genome aligner BWA (http://bio-bwa.sourceforge.net) and SMALT (http://www.sa
 
 
 #### Run scaffhtag with aligned and sorted bam file: aligned.bam  
-           $ /full/path/to/htag/src/scaffhtag -nodes <nodes> -plot barcode-length.png -bam /lustre/scratch117/sciops/team117/hpag/zn1/aligned.bam draft-assembly.fasta output_scaffolds.fasta \
+           $ /full/path/to/htag/src/scaffhtag -nodes <nodes> -plot barcode-length.png \
+             -bam /lustre/scratch117/sciops/team117/hpag/zn1/aligned.bam \
+             draft-assembly.fasta output_scaffolds.fasta \
 
 
 #### Run alignment with ema:
-           $ /full/path/to/htag/src/scaff-bin/ema-align.csh <input_cram_file> <Output_workdirectory> <bwa_index> <output_bam_file> \
+           $ /full/path/to/htag/src/scaff-bin/ema-align.csh <input_cram_file> \ 
+             <Output_workdirectory> <bwa_index> <output_bam_file> \
 	   
 #####	 Instructions for Installation
  	   https://github.com/wtsi-hpag/scaffhtag
@@ -101,7 +104,9 @@ The genome aligner BWA (http://bio-bwa.sourceforge.net) and SMALT (http://www.sa
 	   samtools faidx Oak-chr.fasta
 	 Alignment 
 	 -- Say you have cram file 43969#17.cram and Oak-chr.fasta index 
-	   /nfs/users/nfs_z/zn1/bin/ema-align.csh 43969#17.cram readsplit-17 /lustre/scratch117/sciops/team117/hpag/zn1/project/HiC/QC/run-43969/oak1/bindex/Oak-chr.fasta ema_final-17.bam
+	   /nfs/users/nfs_z/zn1/bin/ema-align.csh 43969#17.cram readsplit-17 \
+           /lustre/scratch117/sciops/team117/hpag/zn1/project/HiC/QC/run-43969/oak1/bindex/Oak-chr.fasta \ 
+           ema_final-17.bam
 	 Your output file ema_final-17.bam will be in readsplit-17.  
   
  
