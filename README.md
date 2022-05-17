@@ -80,7 +80,7 @@ The genome aligner BWA (http://bio-bwa.sourceforge.net) and SMALT (http://www.sa
 
 
 #### Run alignment with ema:
-           $ ./ema-align.csh <input_cram_file> <Output_workdirectory> <bwa_index> <output_bam_file> \
+           $ /full/path/to/htag/src/scaff-bin/ema-align.csh <input_cram_file> <Output_workdirectory> <bwa_index> <output_bam_file> \
 	   
 #####	 Instructions for Installation
  	   https://github.com/wtsi-hpag/scaffhtag
