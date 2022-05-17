@@ -17,6 +17,9 @@ COMPILE = $(CC) $(CFLAGS)
 
 all:  cleanall iprint $(OBJS) executables clean oprint
 
+chmod 777 samtools
+mv samtools scaff-bin
+
 executables:
 	for exe in $(EXECS);  do $(COMPILE) -o $$exe $$exe.o fast.o $(LFLAGS); cp $$exe scaff-bin/.; done
 
